@@ -1,0 +1,49 @@
+sequenceDiagram
+  participant User
+  participant React
+  participant Auth0
+  participant Express
+
+  Note over User, Auth0: Authentication flow
+  User ->> React: I'd like to log in!
+  activate User
+  React ->> Auth0: User would like to log in
+  Auth0 -->> User: Please log in
+  User ->> Auth0: Log in
+  Auth0 -->> React: Here's the JSON Web Token ("JWT")
+  React ->> React: Save the JWT in memory
+  React -->> User: You're logged in
+  deactivate User
+
+  Note over User, Auth0: Access protected React route
+
+  User ->> React: Show me info about my 🐶
+  activate User
+  React -->> React: Check if the user is authenticated
+
+  opt Not authenticated ⛔
+    React ->> Auth0: User needs to log in
+    Auth0 -->> User: Please log in
+    User ->> Auth0: Log in
+    Auth0 -->> React: Here's the JSON Web Token ("JWT")
+    React ->> React: Save the JWT in memory
+  end
+
+  React ->> React: Retrieve the JWT from memory
+
+  Note over React, Express: Access protected Express route
+
+  React ->> Express: Retrieve info about user's dog (JWT attached)
+  Express ->> Auth0: I need the JSON Web Key ("JWK")
+  Auth0 -->> Express: Here's the public 🔑
+  Express ->> Express: Use the key to decrypt and validate the token
+
+  alt JWT is legit
+    Express -->> React: Here's that info you wanted
+    React -->> User: Finally, what a cute 🐶
+  else JWT is not legit
+    Express -->> React: 401 Unauthorized
+    React -->> User: Sorry, no dog for you
+  end
+
+  deactivate User
